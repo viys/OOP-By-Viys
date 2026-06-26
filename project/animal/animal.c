@@ -38,6 +38,20 @@ static int animal_speak(void* t) {
     return 0;
 }
 
+static int animal_sound(void* t) {
+    ANIMAL_CLASS_IMPLEMENTS* this = (ANIMAL_CLASS_IMPLEMENTS*)t;
+
+    if (this == NULL || this->speak == NULL) {
+        return -1;
+    }
+
+    /*
+     * sound 是 Animal 提供的公共方法。
+     * speak 可由子类重写，因此这里会自动调用实际对象的发声实现。
+     */
+    return this->speak(this);
+}
+
 ANIMAL_CLASS* ANIMAL_CLASS_CTOR(void) {
     ANIMAL_CLASS* this = (ANIMAL_CLASS*)malloc(sizeof(ANIMAL_CLASS));
 
@@ -48,6 +62,7 @@ ANIMAL_CLASS* ANIMAL_CLASS_CTOR(void) {
     this->api.init = animal_init;
     this->api.get_name = animal_get_name;
     this->api.speak = animal_speak;
+    this->api.sound = animal_sound;
 
     return this;
 }

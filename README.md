@@ -119,7 +119,13 @@ DOG_CLASS* DOG_CLASS_CTOR(ANIMAL_CLASS_IMPLEMENTS* t);
 
 > 同一个调用入口，根据传入对象执行不同实现。
 
-`animal_sound()` 只依赖统一接口：
+`animal_sound()` 也按照类方法的格式定义在 `ANIMAL_CLASS_IMPLEMENTS` 中，并由 `ANIMAL_CLASS_CTOR()` 完成绑定：
+
+```c
+this->api.sound = animal_sound;
+```
+
+它只依赖当前对象的统一接口：
 
 ```c
 static int animal_sound(void* t) {
@@ -128,11 +134,11 @@ static int animal_sound(void* t) {
 }
 ```
 
-调用代码完全相同：
+Cat 和 Dog 复制 Animal 接口时会继承 `sound`，同时分别重写 `speak`。调用代码保持相同的类方法格式：
 
 ```c
-animal_sound(cat);
-animal_sound(dog);
+cat->sound(cat);
+dog->sound(dog);
 ```
 
 但运行结果不同：
@@ -142,7 +148,7 @@ animal cat say: Meow!
 animal dog say: Woof!
 ```
 
-原因是 Cat 和 Dog 的 `speak` 函数指针分别指向 `cat_speak` 和 `dog_speak`。这就是通过函数指针实现的运行时多态。
+原因是公共的 `sound` 方法会继续调用当前对象的 `speak`，而 Cat 和 Dog 的 `speak` 函数指针分别指向 `cat_speak` 和 `dog_speak`。这就是通过函数指针实现的运行时多态。
 
 ------
 
@@ -157,6 +163,7 @@ typedef struct {
     int (*init)(void* t, Animal_Attr attr);
     int (*get_name)(void* t, char* name);
     int (*speak)(void* t);
+    int (*sound)(void* t);
 } ANIMAL_CLASS_IMPLEMENTS;
 ```
 
@@ -178,44 +185,35 @@ ANIMAL_CLASS_IMPLEMENTS* animal_dog = NULL;
 - CMake 3.15 或更高版本；
 - 支持 C99 的 C 编译器，例如 GCC、Clang、Apple Clang、MinGW 或 MSVC。
 
-### 步骤 1：生成构建目录
+### 编译
+
+使用 Ninja 只需要两条命令：
 
 ```bash
-cmake -S . -B build
-```
-
-### 步骤 2：编译项目
-
-```bash
+cmake -S . -B build -G Ninja
 cmake --build build
 ```
 
-### 步骤 3：运行程序
-
-Windows（MinGW 等单配置生成器）：
+如果使用 MinGW，把第一条命令改为：
 
 ```bash
-.\build\oopc.exe
+cmake -S . -B build -G "MinGW Makefiles"
 ```
 
-使用 Visual Studio 等多配置生成器时：
+同一个 `build` 目录不能混用不同生成器。如果之前使用过 Visual Studio，需要先删除一次 `build` 目录，再重新执行上面的配置命令。
 
-```bash
-.\build\Debug\oopc.exe
+### 运行
+
+Windows：
+
+```powershell
+.\build\oopc.exe
 ```
 
 Linux / macOS：
 
 ```bash
 ./build/oopc
-```
-
-macOS 也可以使用 Xcode 生成器：
-
-```bash
-cmake -S . -B build -G Xcode
-cmake --build build --config Release
-./build/Release/oopc
 ```
 
 代码统一使用标准 C99 接口，并使用 `\n` 输出换行。Windows C 运行库会将其转换为 CRLF，Linux 和 macOS 则保持 LF，无需在源码中进行平台判断。
@@ -237,7 +235,7 @@ animal dog say: Woof!
 
 - `animal name is ...`：通过 `get_name()` 演示封装；
 - 第一组 `say`：Cat 和 Dog 复用 Animal 接口并重写 `speak`，演示继承；
-- 第二组 `say`：通过统一的 `animal_sound()` 调用不同实现，演示多态；
+- 第二组 `say`：通过继承的 `sound()` 调用各自的 `speak()`，演示多态；
 - 整个调用过程只依赖 `ANIMAL_CLASS_IMPLEMENTS`，演示抽象。
 
 ---
@@ -249,7 +247,7 @@ animal dog say: Woof!
 1. 在 `animal.h` 中定义 `Bird_Attr` 和 `BIRD_CLASS`；
 2. 在 `animal.c` 中实现 `bird_speak()`；
 3. 在 `BIRD_CLASS_CTOR()` 中复制 Animal 接口并重写 `speak`；
-4. 在 `main.c` 中通过 `animal_sound(bird)` 验证多态。
+4. 在 `main.c` 中通过 `bird->sound(bird)` 验证多态。
 
 核心代码可以保持与现有构造函数一致：
 
@@ -266,7 +264,7 @@ BIRD_CLASS* BIRD_CLASS_CTOR(ANIMAL_CLASS_IMPLEMENTS* t) {
 }
 ```
 
-练习目标是：增加 Bird 后，`animal_sound()` 不需要增加 `if/else` 类型判断。
+练习目标是：增加 Bird 后，继承得到的 `sound` 方法不需要增加 `if/else` 类型判断。
 
 ---
 
@@ -276,7 +274,7 @@ BIRD_CLASS* BIRD_CLASS_CTOR(ANIMAL_CLASS_IMPLEMENTS* t) {
 | ---- | -------------- |
 | 封装 | 通过 `get_name()` 访问名称，由接口管理对象数据 |
 | 继承 | Cat/Dog 构造函数复制 Animal 接口，并重写 `speak` |
-| 多态 | `animal_sound()` 使用统一接口，实际行为由函数指针决定 |
+| 多态 | `sound()` 调用对象重写后的 `speak()`，实际行为由函数指针决定 |
 | 抽象 | `ANIMAL_CLASS_IMPLEMENTS` 定义所有动物的公共能力 |
 
 本项目展示的是一种轻量级 C 面向对象写法。它适合需要统一接口和可替换实现的场景；如果业务流程简单，普通结构体和函数通常更加直接。

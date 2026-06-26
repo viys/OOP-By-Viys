@@ -5,16 +5,6 @@
 ANIMAL_CLASS_IMPLEMENTS* animal_cat = NULL;
 ANIMAL_CLASS_IMPLEMENTS* animal_dog = NULL;
 
-static int animal_sound(void* t) {
-    ANIMAL_CLASS_IMPLEMENTS* this = (ANIMAL_CLASS_IMPLEMENTS*)t;
-
-    if (this == NULL || this->speak == NULL) {
-        return -1;
-    }
-
-    return this->speak(this);
-}
-
 int main(void)
 {
     char name[10] = {0};
@@ -68,9 +58,9 @@ int main(void)
     cat->speak(cat);
     dog->speak(dog);
 
-    /* 多态：同一个 animal_sound 接口产生不同的发声行为。 */
-    animal_sound(cat);
-    animal_sound(dog);
+    /* 多态：继承同一个 sound 方法，实际调用各自重写的 speak。 */
+    cat->sound(cat);
+    dog->sound(dog);
 
     CAT_CLASS_DTOR((CAT_CLASS*)cat);
     DOG_CLASS_DTOR((DOG_CLASS*)dog);

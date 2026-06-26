@@ -10,6 +10,7 @@ typedef struct {
     int (*init)(void* t, Animal_Attr attr);
     int (*get_name)(void* t, char* name);
     int (*speak)(void* t);
+    int (*sound)(void* t);
 } ANIMAL_CLASS_IMPLEMENTS;
 
 typedef struct {
