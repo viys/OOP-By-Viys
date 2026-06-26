@@ -5,14 +5,23 @@
 
 static int animal_init(void* t, Animal_Attr attr) {
     ANIMAL_CLASS* this = (ANIMAL_CLASS*)t;
-    
+
+    if (this == NULL) {
+        return -1;
+    }
+
     memcpy(&this->attr, &attr, sizeof(Animal_Attr));
-    
+
     return 0;
 }
 
 static int animal_get_name(void* t, char* name) {
     ANIMAL_CLASS* this = (ANIMAL_CLASS*)t;
+
+    if (this == NULL || name == NULL) {
+        return -1;
+    }
+
     memcpy(name, this->attr.name, strlen(this->attr.name) + 1);
     return 0;
 }
@@ -20,7 +29,11 @@ static int animal_get_name(void* t, char* name) {
 static int animal_speak(void* t) {
     ANIMAL_CLASS* this = (ANIMAL_CLASS*)t;
 
-    printf("animal %s say: %s!\r\n", this->attr.name, this->attr.sound);
+    if (this == NULL) {
+        return -1;
+    }
+
+    printf("animal %s say: %s!\n", this->attr.name, this->attr.sound);
 
     return 0;
 }
@@ -28,10 +41,14 @@ static int animal_speak(void* t) {
 ANIMAL_CLASS* ANIMAL_CLASS_CTOR(void) {
     ANIMAL_CLASS* this = (ANIMAL_CLASS*)malloc(sizeof(ANIMAL_CLASS));
 
+    if (this == NULL) {
+        return NULL;
+    }
+
     this->api.init = animal_init;
     this->api.get_name = animal_get_name;
     this->api.speak = animal_speak;
-    
+
     return this;
 }
 
@@ -42,17 +59,27 @@ void ANIMAL_CLASS_DTOR(ANIMAL_CLASS* t) {
 static int dog_speak(void* t) {
     DOG_CLASS* this = (DOG_CLASS*)t;
 
-    printf("animal %s say: Woof!\r\n", this->attr.name);
+    if (this == NULL) {
+        return -1;
+    }
+
+    printf("animal %s say: Woof!\n", this->attr.name);
 
     return 0;
 }
 
 DOG_CLASS* DOG_CLASS_CTOR(ANIMAL_CLASS_IMPLEMENTS* t) {
     DOG_CLASS* this = (DOG_CLASS*)malloc(sizeof(DOG_CLASS));
+    ANIMAL_CLASS* parent = (ANIMAL_CLASS*)t;
 
-    t->get_name(t, this->attr.name);
+    if (this == NULL || t == NULL) {
+        free(this);
+        return NULL;
+    }
 
-    // 此处没有实现 init get_name 的接口
+    /* 先复用 Animal 的接口和属性，再重写 Dog 自己的 speak。 */
+    memcpy(&this->api, t, sizeof(ANIMAL_CLASS_IMPLEMENTS));
+    memcpy(&this->attr, &parent->attr, sizeof(Dog_Attr));
     this->api.speak = dog_speak;
 
     return this;
@@ -65,17 +92,27 @@ void DOG_CLASS_DTOR(DOG_CLASS* t) {
 static int cat_speak(void* t) {
     CAT_CLASS* this = (CAT_CLASS*)t;
 
-    printf("animal %s say: Meow!\r\n", this->attr.name);
+    if (this == NULL) {
+        return -1;
+    }
+
+    printf("animal %s say: Meow!\n", this->attr.name);
 
     return 0;
 }
 
 CAT_CLASS* CAT_CLASS_CTOR(ANIMAL_CLASS_IMPLEMENTS* t) {
     CAT_CLASS* this = (CAT_CLASS*)malloc(sizeof(CAT_CLASS));
+    ANIMAL_CLASS* parent = (ANIMAL_CLASS*)t;
 
-    t->get_name(t, this->attr.name);
+    if (this == NULL || t == NULL) {
+        free(this);
+        return NULL;
+    }
 
-    // 此处没有实现 init get_name 的接口
+    /* 先复用 Animal 的接口和属性，再重写 Cat 自己的 speak。 */
+    memcpy(&this->api, t, sizeof(ANIMAL_CLASS_IMPLEMENTS));
+    memcpy(&this->attr, &parent->attr, sizeof(Cat_Attr));
     this->api.speak = cat_speak;
 
     return this;

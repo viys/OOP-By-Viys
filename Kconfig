@@ -1,5 +1,0 @@
-mainmenu "Kconfig 示例主菜单"
-
-menu "Animal 配置"
-    source "project/animal/animal.kconfig"
-endmenu

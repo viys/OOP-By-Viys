@@ -1,7 +1,0 @@
-config ANIMAL_NAME_1
-    string "animal name .1"
-    default "cat"
-
-config ANIMAL_NAME_2
-    string "animal name .2"
-    default "dog"

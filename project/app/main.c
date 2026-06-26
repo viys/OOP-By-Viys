@@ -1,63 +1,83 @@
 #include <stdio.h>
 #include <string.h>
-#include "my_config.h"
 #include "animal.h"
 
-ANIMAL_CLASS_IMPLEMENTS* anmial_cat = NULL;
-ANIMAL_CLASS_IMPLEMENTS* anmial_dog = NULL;
+ANIMAL_CLASS_IMPLEMENTS* animal_cat = NULL;
+ANIMAL_CLASS_IMPLEMENTS* animal_dog = NULL;
 
 static int animal_sound(void* t) {
     ANIMAL_CLASS_IMPLEMENTS* this = (ANIMAL_CLASS_IMPLEMENTS*)t;
 
-    this->speak(this);
+    if (this == NULL || this->speak == NULL) {
+        return -1;
+    }
 
-    return 0;
+    return this->speak(this);
 }
 
-int main()
+int main(void)
 {
-    printf(">\r\n");
-
     char name[10] = {0};
-
-    Animal_Attr Cat_Attr = {
-        .name = CONFIG_ANIMAL_NAME_1,
-    };
-
-    Animal_Attr Dog_Attr = {
-        .name = CONFIG_ANIMAL_NAME_2,
-    };
-
-    // 抽象
-    anmial_cat = (ANIMAL_CLASS_IMPLEMENTS*)ANIMAL_CLASS_CTOR();
-    anmial_cat->init(anmial_cat, Cat_Attr);
-    
-    anmial_dog = (ANIMAL_CLASS_IMPLEMENTS*)ANIMAL_CLASS_CTOR();
-    anmial_dog->init(anmial_dog, Dog_Attr);
-
-    // 封装
-    memset(name, 0x00, sizeof(name));
-    anmial_cat->get_name(anmial_cat, name);
-    printf("animal name is %s\r\n", name);
-    memset(name, 0x00, sizeof(name));
-    anmial_dog->get_name(anmial_dog, name);
-    printf("animal name is %s\r\n", name);
-
     ANIMAL_CLASS_IMPLEMENTS* dog = NULL;
     ANIMAL_CLASS_IMPLEMENTS* cat = NULL;
 
-    // 继承
-    cat = (ANIMAL_CLASS_IMPLEMENTS*)CAT_CLASS_CTOR(anmial_cat);
-    dog = (ANIMAL_CLASS_IMPLEMENTS*)DOG_CLASS_CTOR(anmial_dog);
+    Animal_Attr Cat_Attr = {
+        .name = "cat",
+        .sound = "Meow",
+    };
+
+    Animal_Attr Dog_Attr = {
+        .name = "dog",
+        .sound = "Woof",
+    };
+
+    printf(">\n");
+
+    /* 抽象：使用统一的 Animal 接口创建并初始化对象。 */
+    animal_cat = (ANIMAL_CLASS_IMPLEMENTS*)ANIMAL_CLASS_CTOR();
+    animal_dog = (ANIMAL_CLASS_IMPLEMENTS*)ANIMAL_CLASS_CTOR();
+    if (animal_cat == NULL || animal_dog == NULL) {
+        ANIMAL_CLASS_DTOR((ANIMAL_CLASS*)animal_cat);
+        ANIMAL_CLASS_DTOR((ANIMAL_CLASS*)animal_dog);
+        return 1;
+    }
+
+    animal_cat->init(animal_cat, Cat_Attr);
+    animal_dog->init(animal_dog, Dog_Attr);
+
+    /* 封装：通过 get_name 获取名称，不直接访问对象内部属性。 */
+    memset(name, 0x00, sizeof(name));
+    animal_cat->get_name(animal_cat, name);
+    printf("animal name is %s\n", name);
+
+    memset(name, 0x00, sizeof(name));
+    animal_dog->get_name(animal_dog, name);
+    printf("animal name is %s\n", name);
+
+    /* 继承：Cat 和 Dog 复用 Animal 接口，并重写 speak。 */
+    cat = (ANIMAL_CLASS_IMPLEMENTS*)CAT_CLASS_CTOR(animal_cat);
+    dog = (ANIMAL_CLASS_IMPLEMENTS*)DOG_CLASS_CTOR(animal_dog);
+    if (cat == NULL || dog == NULL) {
+        CAT_CLASS_DTOR((CAT_CLASS*)cat);
+        DOG_CLASS_DTOR((DOG_CLASS*)dog);
+        ANIMAL_CLASS_DTOR((ANIMAL_CLASS*)animal_cat);
+        ANIMAL_CLASS_DTOR((ANIMAL_CLASS*)animal_dog);
+        return 1;
+    }
 
     cat->speak(cat);
     dog->speak(dog);
 
-    // 多态
+    /* 多态：同一个 animal_sound 接口产生不同的发声行为。 */
     animal_sound(cat);
     animal_sound(dog);
 
-    printf("<\r\n");
+    CAT_CLASS_DTOR((CAT_CLASS*)cat);
+    DOG_CLASS_DTOR((DOG_CLASS*)dog);
+    ANIMAL_CLASS_DTOR((ANIMAL_CLASS*)animal_cat);
+    ANIMAL_CLASS_DTOR((ANIMAL_CLASS*)animal_dog);
+
+    printf("<\n");
 
     return 0;
 }

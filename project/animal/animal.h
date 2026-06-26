@@ -1,4 +1,5 @@
-#pragma once
+#ifndef OOPC_ANIMAL_H
+#define OOPC_ANIMAL_H
 
 typedef struct {
     char name[10];
@@ -18,6 +19,7 @@ typedef struct {
 
 typedef struct {
     char name[10];
+    char sound[10];
 } Dog_Attr;
 
 typedef struct {
@@ -27,6 +29,7 @@ typedef struct {
 
 typedef struct {
     char name[10];
+    char sound[10];
 } Cat_Attr;
 
 typedef struct {
@@ -42,3 +45,5 @@ void DOG_CLASS_DTOR(DOG_CLASS* t);
 
 CAT_CLASS* CAT_CLASS_CTOR(ANIMAL_CLASS_IMPLEMENTS* t);
 void CAT_CLASS_DTOR(CAT_CLASS* t);
+
+#endif
